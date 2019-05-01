@@ -54,6 +54,20 @@ public class PotatoAI implements PlayerFactory {
 
                 }
             }
+            //Second layer of check
+            for (Object currentEdgeTo : edgesTo){
+                ArrayList<Object> edgesTotheEdges = new ArrayList<>(view.getGraph().getEdgesTo(view.getGraph().getNode(((int)((Edge) currentEdgeTo).source().value()))));
+                for (Object currentEdgeToTheEdge : edgesTotheEdges) {
+                    for (Colour currentPlayer : currentPlayers) {
+                        if (view.getPlayerLocation(currentPlayer) == ((Edge) currentEdgeToTheEdge).data() && !currentPlayer.isMrX()) {
+                            thisCheck = true;
+                        }
+
+                    }
+                }
+
+                
+            }
             return thisCheck;
 
 
@@ -95,7 +109,7 @@ public class PotatoAI implements PlayerFactory {
                     int moveScoreTracker;
                     if (checkIfDetectiveNearMove(((TicketMove) currentMove).destination(), view)) {
                         moveScoreTracker = 2;
-                    } else moveScoreTracker = 5;
+                    } else moveScoreTracker = 7;
                     moveScoreTracker+=optionsOpenedByMove(((TicketMove) currentMove).destination(), view);
 
 
@@ -106,7 +120,7 @@ public class PotatoAI implements PlayerFactory {
                     int doubleMoveScoreTracker;
                     if (checkIfDetectiveNearMove(((DoubleMove) currentMove).finalDestination(), view)) {
                         doubleMoveScoreTracker = 1;
-                    } else doubleMoveScoreTracker = 4;
+                    } else doubleMoveScoreTracker = 5;
 
                     doubleMoveScoreTracker+=optionsOpenedByMove(((DoubleMove) currentMove).finalDestination(), view);
                     nodeScores.put(doubleMoveScoreTracker, moveNumber);
