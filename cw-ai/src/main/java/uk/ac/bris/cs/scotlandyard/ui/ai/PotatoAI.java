@@ -89,27 +89,19 @@ public class PotatoAI implements PlayerFactory {
             ArrayList<Move> bestMoves = new ArrayList<>();
             int highestScore = 0;
             for (int currentMoveScore : nodeScores.keySet()) {
+                if (currentMoveScore == highestScore) {
+                    bestMoves.add(moveList.get(nodeScores.get(currentMoveScore)));
+                }
                 if (currentMoveScore > highestScore) {
                     bestMoves.clear();
                     highestScore = currentMoveScore;
                     bestMoves.add(moveList.get(nodeScores.get(currentMoveScore)));
                 }
-                if (currentMoveScore == highestScore) {
-                    bestMoves.add(moveList.get(nodeScores.get(currentMoveScore)));
-                }
 
             }
-        /* Didn't wanna fuck up your code, but here's my idea
-        for (int currentMoveScore : nodeScores.keySet()){
-            if (int currentMoveScore > highestScore) {
-            highestMove = currentMoveScore;
-            }
-        }
-        for (int currentMoveScore : nodeScores.keySet()){
-            if( currentMoveScore == highestScore){
-            bestMoves.add(moveList.get(nodeScore.get(currentMoveScore)));
-        }
-         */
+
+
+
 
             return bestMoves.get(random.nextInt(bestMoves.size()));
 
