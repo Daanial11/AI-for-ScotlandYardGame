@@ -85,7 +85,7 @@ public class PotatoAI implements PlayerFactory {
                 }
             }
             if(transports.contains(Transport.BUS)){
-                scoreTracker+=2;
+                scoreTracker+=1;
             }
             if(transports.contains(Transport.UNDERGROUND)){
                 scoreTracker+=2;
