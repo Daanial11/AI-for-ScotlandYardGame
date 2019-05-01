@@ -55,7 +55,7 @@ public class PotatoAI implements PlayerFactory {
 
                 }
             }
-            //Second layer of check
+            //Second level of check
             for (Object currentEdgeTo : edgesTo){
                 ArrayList<Object> edgesTotheEdges = new ArrayList<>(view.getGraph().getEdgesTo(view.getGraph().getNode(((int)((Edge) currentEdgeTo).source().value()))));
                 for (Object currentEdgeToTheEdge : edgesTotheEdges) {
@@ -117,7 +117,8 @@ public class PotatoAI implements PlayerFactory {
             }
             return scoreTracker;
         }
-
+        //generates score for each move depending on several factors, including how many detectives are nearby, how many
+        //options are opened up by the move and if detective can reach destination of some move
         private Move score(ScotlandYardView view, Set<Move> moves) {
             HashMultimap<Integer, Integer> nodeScores = HashMultimap.create();
             List<Move> moveList = new ArrayList<>(moves);
@@ -139,6 +140,7 @@ public class PotatoAI implements PlayerFactory {
                     nodeScores.put(moveScoreTracker, moveNumber);
 
                 }
+                //Double moves are more expensive so score less points, should only be used when no ticket move scores higher
                 if (currentMove.getClass() == DoubleMove.class) {
                     int doubleMoveScoreTracker;
                     if (checkIfDetectiveNearMove(((DoubleMove) currentMove).finalDestination(), view)) {
@@ -169,7 +171,7 @@ public class PotatoAI implements PlayerFactory {
 
 
 
-
+            //As there may be multiple moves with the same score, one is chosen at random from the best scoring moves
             return moveList.get(bestMoves.get(random.nextInt(bestMoves.size())));
 
 
