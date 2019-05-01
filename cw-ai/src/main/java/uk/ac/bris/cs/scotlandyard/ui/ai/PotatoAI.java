@@ -11,6 +11,8 @@ import uk.ac.bris.cs.scotlandyard.ai.ManagedAI;
 import uk.ac.bris.cs.scotlandyard.ai.PlayerFactory;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
+import static uk.ac.bris.cs.scotlandyard.model.Ticket.*;
+import static uk.ac.bris.cs.scotlandyard.model.Ticket.fromTransport;
 
 
 // TODO name the AI
@@ -37,7 +39,6 @@ public class PotatoAI implements PlayerFactory {
             // picks a random move
             Move bestMove = score(view, moves);
             callback.accept(bestMove);
-            System.out.println(view.getPlayerLocation(Colour.BLACK));
 
         }
 
@@ -72,6 +73,27 @@ public class PotatoAI implements PlayerFactory {
 
 
         }
+        //Checks if detective can move to destination of a possible move, if so then -10 off score for move
+        private int canDetectiveMovetoTarget(int destination, ScotlandYardView view){
+            List<Colour> detectiveList = new ArrayList<>();
+            detectiveList.addAll(view.getPlayers());
+            detectiveList.remove(Colour.BLACK);
+
+            for(Colour currentDetective : detectiveList){
+                Set<Move> currentDetectiveValidMoves = validMove(currentDetective, view);
+                for(Move currentMove: currentDetectiveValidMoves){
+                    if(currentMove.getClass() == TicketMove.class){
+                        if(((TicketMove)currentMove).destination() == destination){
+                            return -10;
+                        }
+                    }
+
+                }
+
+            }
+            return 0;
+
+        }
         //checks how many options are opened up when making a move and returns a score
         private int optionsOpenedByMove (int destination, ScotlandYardView view){
             ArrayList<Object> edgesFrom =new ArrayList<>(view.getGraph().getEdgesFrom(view.getGraph().getNode(destination)));
@@ -85,13 +107,13 @@ public class PotatoAI implements PlayerFactory {
                 }
             }
             if(transports.contains(Transport.BUS)){
-                scoreTracker+=1;
+                scoreTracker+=2;
             }
             if(transports.contains(Transport.UNDERGROUND)){
                 scoreTracker+=2;
             }
             if(transports.contains(Transport.FERRY)){
-                scoreTracker+=2;
+                scoreTracker+=1;
             }
             return scoreTracker;
         }
@@ -111,6 +133,7 @@ public class PotatoAI implements PlayerFactory {
                         moveScoreTracker = 2;
                     } else moveScoreTracker = 7;
                     moveScoreTracker+=optionsOpenedByMove(((TicketMove) currentMove).destination(), view);
+                    moveScoreTracker+=canDetectiveMovetoTarget(((TicketMove) currentMove).destination(), view);
 
 
                     nodeScores.put(moveScoreTracker, moveNumber);
@@ -123,13 +146,12 @@ public class PotatoAI implements PlayerFactory {
                     } else doubleMoveScoreTracker = 5;
 
                     doubleMoveScoreTracker+=optionsOpenedByMove(((DoubleMove) currentMove).finalDestination(), view);
+                    doubleMoveScoreTracker+=canDetectiveMovetoTarget(((DoubleMove) currentMove).finalDestination(), view);
                     nodeScores.put(doubleMoveScoreTracker, moveNumber);
 
                 }
                 moveNumber++;
             }
-            System.out.println(nodeScores.keySet());
-            System.out.println(nodeScores.get(4));
 
 
 
@@ -144,7 +166,6 @@ public class PotatoAI implements PlayerFactory {
                 }
 
             }
-            System.out.println(bestMoves);
 
 
 
@@ -152,6 +173,43 @@ public class PotatoAI implements PlayerFactory {
             return moveList.get(bestMoves.get(random.nextInt(bestMoves.size())));
 
 
+        }
+        //Just Checks if location is occupied by another detective
+        private Boolean isLocationOccupied(int destination, ScotlandYardView view){
+            for (Colour currentPlayer : view.getPlayers()){
+                if(view.getPlayerLocation(currentPlayer).get() == destination && !currentPlayer.isMrX()){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+
+        // Modified version of validMoves, only for detectives.
+        // Returns set of ticketMoves that the player can do, regarding tickets, locations and other player's location.
+        private Set<Move> validMove(Colour player, ScotlandYardView view){
+            // Array list of the edges around the player's first location (to make set of valid TicketMoves)
+            ArrayList<Object> Edges = new ArrayList<>(view.getGraph().getEdgesFrom(view.getGraph().getNode(view.getPlayerLocation(player).get())));
+            // Final validMove set
+            Set<Move> validMoves = new HashSet<>();
+
+            for(Object possibleMove: Edges){
+                Transport transportType = (Transport)((Edge)possibleMove).data();
+                int destination = (int)((Edge)possibleMove).destination().value();
+                // Checks player has enough tickets of a transport type and location is not taken to make the move
+                if(view.getPlayerTickets(player, fromTransport(transportType)).get() != 0 && !isLocationOccupied(destination, view)) {
+                    validMoves.add(new TicketMove(player, fromTransport(transportType), destination));
+
+                }
+
+            }
+            // Adds Passmove if player is Detective
+            if(validMoves.isEmpty() && player.isDetective()){
+                validMoves.add(new PassMove(player));
+            }
+
+            return validMoves;
         }
 
 
