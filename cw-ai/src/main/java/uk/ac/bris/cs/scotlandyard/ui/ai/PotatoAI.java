@@ -43,14 +43,15 @@ public class PotatoAI implements PlayerFactory {
         }
 
         //Checks if detective is right next to the destination of the move being made
-        private Boolean checkIfDetectiveNearMove(int destination, ScotlandYardView view) {
+        private int checkIfDetectiveNearMove(int destination, ScotlandYardView view) {
             ArrayList<Object> edgesTo = new ArrayList<>(view.getGraph().getEdgesTo(view.getGraph().getNode(destination)));
             ArrayList<Colour> currentPlayers = new ArrayList<>(view.getPlayers());
-            Boolean thisCheck = false;
+            Boolean firstLevelCheck = false;
+            Boolean secondLevelCheck = false;
             for (Object currentEdgeTo : edgesTo) {
                 for (Colour currentPlayer : currentPlayers) {
                     if (view.getPlayerLocation(currentPlayer) == ((Edge) currentEdgeTo).data() && !currentPlayer.isMrX()) {
-                        thisCheck = true;
+                        firstLevelCheck = true;
                     }
 
                 }
@@ -61,7 +62,7 @@ public class PotatoAI implements PlayerFactory {
                 for (Object currentEdgeToTheEdge : edgesTotheEdges) {
                     for (Colour currentPlayer : currentPlayers) {
                         if (view.getPlayerLocation(currentPlayer) == ((Edge) currentEdgeToTheEdge).data() && !currentPlayer.isMrX()) {
-                            thisCheck = true;
+                            secondLevelCheck = true;
                         }
 
                     }
@@ -69,7 +70,17 @@ public class PotatoAI implements PlayerFactory {
 
                 
             }
-            return thisCheck;
+            if(firstLevelCheck && secondLevelCheck){
+                return 3;
+            }
+            if(!firstLevelCheck && secondLevelCheck){
+                return 5;
+            }
+            if(firstLevelCheck && !secondLevelCheck){
+                return 4;
+            }
+            else return 7;
+
 
 
         }
@@ -129,10 +140,8 @@ public class PotatoAI implements PlayerFactory {
 
                 }
                 if (currentMove.getClass() == TicketMove.class) {
-                    int moveScoreTracker;
-                    if (checkIfDetectiveNearMove(((TicketMove) currentMove).destination(), view)) {
-                        moveScoreTracker = 2;
-                    } else moveScoreTracker = 7;
+                    int moveScoreTracker=0;
+                    moveScoreTracker+=checkIfDetectiveNearMove(((TicketMove) currentMove).destination(), view);
                     moveScoreTracker+=optionsOpenedByMove(((TicketMove) currentMove).destination(), view);
                     moveScoreTracker+=canDetectiveMovetoTarget(((TicketMove) currentMove).destination(), view);
 
@@ -140,15 +149,14 @@ public class PotatoAI implements PlayerFactory {
                     nodeScores.put(moveScoreTracker, moveNumber);
 
                 }
-                //Double moves are more expensive so score less points, should only be used when no ticket move scores higher
+                //Double moves are more expensive so score less points (-2), should only be used when no ticket move scores higher
                 if (currentMove.getClass() == DoubleMove.class) {
-                    int doubleMoveScoreTracker;
-                    if (checkIfDetectiveNearMove(((DoubleMove) currentMove).finalDestination(), view)) {
-                        doubleMoveScoreTracker = 1;
-                    } else doubleMoveScoreTracker = 5;
+                    int doubleMoveScoreTracker=0;
 
+                    doubleMoveScoreTracker+=checkIfDetectiveNearMove(((DoubleMove) currentMove).finalDestination(), view);
                     doubleMoveScoreTracker+=optionsOpenedByMove(((DoubleMove) currentMove).finalDestination(), view);
                     doubleMoveScoreTracker+=canDetectiveMovetoTarget(((DoubleMove) currentMove).finalDestination(), view);
+                    doubleMoveScoreTracker = doubleMoveScoreTracker -2;
                     nodeScores.put(doubleMoveScoreTracker, moveNumber);
 
                 }
@@ -170,7 +178,7 @@ public class PotatoAI implements PlayerFactory {
             }
 
 
-
+           
             //As there may be multiple moves with the same score, one is chosen at random from the best scoring moves
             return moveList.get(bestMoves.get(random.nextInt(bestMoves.size())));
 
